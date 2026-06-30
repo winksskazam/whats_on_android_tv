@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "What's On Android TV",
+        "description": "Select an Android TV device.",
+        "data": {
+          "media_player": "Android TV"
+        }
+      }
+    }
+  }
+}
