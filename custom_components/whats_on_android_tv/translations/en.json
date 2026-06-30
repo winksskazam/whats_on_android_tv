@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "What's On Android TV",
-        "description": "Select an Android TV device.",
+        "description": "Choose an Android TV media player.",
         "data": {
           "media_player": "Android TV"
         }
