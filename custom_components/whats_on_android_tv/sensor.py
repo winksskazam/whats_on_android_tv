@@ -10,6 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .app_names import APP_DATABASE
 from .const import DOMAIN
 from .coordinator import WhatsOnAndroidTVCoordinator
 
@@ -23,22 +24,19 @@ async def async_setup_entry(
 ) -> None:
     """Set up the sensor."""
 
-    _LOGGER.warning("What's On Android TV: async_setup_entry called")
-
     coordinator: WhatsOnAndroidTVCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    sensor = WhatsOnAndroidTVSensor(coordinator, entry)
-
-    _LOGGER.warning("What's On Android TV: adding sensor entity")
-
-    async_add_entities([sensor])
+    async_add_entities(
+        [WhatsOnAndroidTVSensor(coordinator, entry)],
+        True,
+    )
 
 
 class WhatsOnAndroidTVSensor(
     CoordinatorEntity[WhatsOnAndroidTVCoordinator],
     SensorEntity,
 ):
-    """Representation of the current Android TV app."""
+    """Current Android TV application."""
 
     _attr_has_entity_name = True
 
@@ -54,14 +52,50 @@ class WhatsOnAndroidTVSensor(
         self._attr_name = "Current App"
         self._attr_icon = "mdi:android-tv"
 
-        _LOGGER.warning("What's On Android TV: sensor initialized")
-
     @property
     def native_value(self):
-        """Return the current app."""
-        return self.coordinator.data.get("app_name")
+        """Return the friendly application name."""
+
+        package = self.coordinator.data.get("app_name")
+
+        if not package:
+            return None
+
+        app = APP_DATABASE.get(package)
+
+        if app:
+            return app["name"]
+
+        return package
 
     @property
     def extra_state_attributes(self):
         """Return additional attributes."""
-        return self.coordinator.data
+
+        attributes = dict(self.coordinator.data)
+
+        package = self.coordinator.data.get("app_name")
+        app = APP_DATABASE.get(package)
+
+        if app:
+            attributes["friendly_app_name"] = app["name"]
+            attributes["category"] = app["category"]
+            attributes["icon_file"] = app["icon"]
+
+        return attributes
+    
+    @property
+    def entity_picture(self):
+        """Return the icon for the current app."""
+
+        package = self.coordinator.data.get("app_name")
+
+        if not package:
+            return None
+
+        app = APP_DATABASE.get(package)
+
+        if not app:
+            return None
+
+        return f"/local/android_tv_icons/{app['icon']}"

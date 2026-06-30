@@ -49,5 +49,6 @@ class WhatsOnAndroidTVCoordinator(DataUpdateCoordinator):
         data.update(attributes)
 
         _LOGGER.debug("Coordinator data: %s", data)
+        _LOGGER.warning("Android TV attributes: %s", attributes)
 
         return data
