@@ -1,43 +1,67 @@
-"""What's On Android TV."""
+"""Sensor platform for What's On Android TV."""
 
 from __future__ import annotations
+
+import logging
+
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import WhatsOnAndroidTVCoordinator
 
-
-async def async_setup(hass, config):
-    """Set up the integration."""
-    return True
+_LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass, entry):
-    """Set up from a config entry."""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the sensor."""
 
-    coordinator = WhatsOnAndroidTVCoordinator(hass, entry)
+    _LOGGER.warning("What's On Android TV: async_setup_entry called")
 
-    await coordinator.async_config_entry_first_refresh()
+    coordinator: WhatsOnAndroidTVCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator
+    sensor = WhatsOnAndroidTVSensor(coordinator, entry)
 
-    await hass.config_entries.async_forward_entry_setups(
-        entry,
-        ["sensor"],
-    )
+    _LOGGER.warning("What's On Android TV: adding sensor entity")
 
-    return True
+    async_add_entities([sensor])
 
 
-async def async_unload_entry(hass, entry):
-    """Unload a config entry."""
+class WhatsOnAndroidTVSensor(
+    CoordinatorEntity[WhatsOnAndroidTVCoordinator],
+    SensorEntity,
+):
+    """Representation of the current Android TV app."""
 
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        entry,
-        ["sensor"],
-    )
+    _attr_has_entity_name = True
 
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id)
+    def __init__(
+        self,
+        coordinator: WhatsOnAndroidTVCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
 
-    return unload_ok
+        self._attr_unique_id = f"{entry.entry_id}_current_app"
+        self._attr_name = "Current App"
+        self._attr_icon = "mdi:android-tv"
+
+        _LOGGER.warning("What's On Android TV: sensor initialized")
+
+    @property
+    def native_value(self):
+        """Return the current app."""
+        return self.coordinator.data.get("app_name")
+
+    @property
+    def extra_state_attributes(self):
+        """Return additional attributes."""
+        return self.coordinator.data
