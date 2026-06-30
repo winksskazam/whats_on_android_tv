@@ -50,5 +50,7 @@ class WhatsOnAndroidTVCoordinator(DataUpdateCoordinator):
 
         _LOGGER.debug("Coordinator data: %s", data)
         _LOGGER.warning("Android TV attributes: %s", attributes)
+        _LOGGER.warning("Selected entity: %s", entity_id)
+        _LOGGER.warning("Domain data keys: %s", list(self.hass.data.keys()))
 
         return data
