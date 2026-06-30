@@ -14,7 +14,7 @@ class WhatsOnAndroidTVCoordinator(DataUpdateCoordinator):
     """Coordinator for What's On Android TV."""
 
     def __init__(self, hass, config_entry):
-        """Initialize the coordinator."""
+        """Initialize coordinator."""
         self.config_entry = config_entry
 
         super().__init__(
@@ -25,8 +25,29 @@ class WhatsOnAndroidTVCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self):
-        """Fetch the latest data."""
+        """Fetch latest data from the selected media player."""
 
-        return {
-            "selected_entity": self.config_entry.data["media_player"],
+        entity_id = self.config_entry.data["media_player"]
+
+        state = self.hass.states.get(entity_id)
+
+        if state is None:
+            _LOGGER.warning("Media player %s not found", entity_id)
+            return {}
+
+        attributes = dict(state.attributes)
+
+        data = {
+            "state": state.state,
+            "app_name": attributes.get("app_name"),
+            "app_id": attributes.get("app_id"),
+            "source": attributes.get("source"),
+            "friendly_name": state.name,
         }
+
+        # Include all media_player attributes so they're available on the sensor.
+        data.update(attributes)
+
+        _LOGGER.debug("Coordinator data: %s", data)
+
+        return data
